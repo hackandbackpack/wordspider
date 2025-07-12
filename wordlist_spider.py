@@ -328,6 +328,41 @@ class OutputManager:
             OutputManager._save_csv(word_counts, output_file)
         else:
             OutputManager._save_txt(word_counts, output_file)
+        
+        # Generate top 100 file name and save top 100 words
+        top100_file = OutputManager._generate_top100_filename(output_file)
+        OutputManager._save_top100(word_counts, top100_file, file_ext)
+    
+    @staticmethod
+    def _generate_top100_filename(original_file: str) -> str:
+        """Generate top 100 filename from original filename."""
+        if '.' in original_file:
+            name, ext = original_file.rsplit('.', 1)
+            return f"{name}100.{ext}"
+        else:
+            return f"{original_file}100"
+    
+    @staticmethod
+    def _save_top100(word_counts: Counter, output_file: str, file_ext: str) -> None:
+        """Save top 100 words to separate file."""
+        top100_words = word_counts.most_common(100)
+        
+        if file_ext == 'json':
+            import json
+            data = {
+                'summary': {
+                    'total_words_in_top100': sum(count for _, count in top100_words),
+                    'unique_words_in_top100': len(top100_words)
+                },
+                'top100_word_counts': dict(top100_words)
+            }
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        else:
+            # Both CSV and TXT use the same count,word format
+            with open(output_file, 'w', encoding='utf-8') as f:
+                for word, count in top100_words:
+                    f.write(f"{count},{word}\n")
     
     @staticmethod
     def _save_json(word_counts: Counter, page_word_counts: Dict[str, Dict[str, int]], 
@@ -411,7 +446,12 @@ def main():
         spider.visited_urls
     )
     
-    print(f"\nResults saved to: {args.output}")
+    # Generate top 100 filename for user notification
+    top100_file = OutputManager._generate_top100_filename(args.output)
+    
+    print(f"\nResults saved to:")
+    print(f"  Full wordlist: {args.output}")
+    print(f"  Top 100 words: {top100_file}")
 
 
 if __name__ == "__main__":
