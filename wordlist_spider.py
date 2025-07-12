@@ -197,9 +197,9 @@ class WebSpider:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
             
-            # Check content type to avoid parsing non-HTML content
+            # Only process HTML content using allowlist - skip everything else
             content_type = response.headers.get('content-type', '').lower()
-            if 'xml' in content_type or 'feed' in url.lower() or url.endswith('.xml'):
+            if not ('text/html' in content_type or 'application/xhtml' in content_type):
                 if not self.quiet:
                     print(f"    Skipping non-HTML content: {content_type}")
                 return None
